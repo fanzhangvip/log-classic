@@ -463,7 +463,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, BLog
                                             final Marker marker, final Level level, final String msg,
                                             final Object[] params, final Throwable t) {
         LoggingEvent le = new LoggingEvent(localFQCN, this, level, generateTag(), msg, t, params);
-        tag = name;
+        tag = "";
         le.setMarker(marker);
         callAppenders(le);
     }
@@ -853,7 +853,7 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, BLog
 
     private void logString(@Level.LevelIntType int type, String msg, String tag, boolean isPart, Object... args) {
         if (!isPart || TextUtils.isEmpty(tag)) {
-            tag = generateTag();
+//            tag = generateTag();
         }
         if (!isPart) {
             if (args.length > 0) {
@@ -921,9 +921,22 @@ public final class Logger implements org.slf4j.Logger, LocationAwareLogger, BLog
      * @return
      */
     private String generateTag() {
-        String tempTag = tag;
+        final String tempTag = tag;
         if (!TextUtils.isEmpty(tempTag)) {
             return tempTag;
+        }
+        StackTraceElement[] trace = new Throwable().getStackTrace();
+        int stackOffset = getStackOffset(trace, Logger.class);
+        if (stackOffset == -1) {
+            stackOffset = getStackOffset(trace, Logger.class);
+            if (stackOffset == -1) {
+                return name;
+            }
+        }
+        final String className = trace[stackOffset + 1].getClassName();
+        final String classTag = className.substring(className.lastIndexOf(".") + 1);
+        if (!TextUtils.isEmpty(classTag)) {
+            return classTag;
         }
         return name;
     }
